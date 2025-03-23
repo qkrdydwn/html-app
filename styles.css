@@ -1,0 +1,241 @@
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: "Arial", sans-serif; }
+body { background-color: #f5f5f5; }
+
+.header { 
+    background-color: #2196F3; 
+    color: white; 
+    padding: 16px; 
+    text-align: center; 
+    position: fixed; 
+    top: 0; 
+    width: 100%; 
+    z-index: 1000;
+}
+
+.header h1 { text-align: center; }
+
+.content {
+    margin-top: 80px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.work-type-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    width: 100%;
+}
+
+.my-info-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    width: 100%;
+    text-align: center;
+    margin-top: 10px;
+    border: 2px dashed #2196F3;
+}
+
+.my-info-card:hover {
+    transform: translateY(-5px);
+    background: #e3f2fd;
+}
+.work-type-card:hover {
+    transform: translateY(-5px);
+}
+
+.detail-screen, .history-screen {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    z-index: 2000;
+    overflow-y: auto;
+}
+
+.detail-header {
+    background: #2196F3;
+    color: white;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.back-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+    margin-right: 16px;
+}
+
+.detail-content {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.detail-content h3 {
+    color: #1976D2;
+    margin: 20px 0 10px 0;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #e3f2fd;
+}
+
+.detail-content ul {
+    list-style: none;
+    margin-left: 20px;
+}
+
+.detail-content li {
+    margin: 10px 0;
+    padding-left: 20px;
+    position: relative;
+}
+
+.detail-content li:before {
+    content: "•";
+    color: #2196F3;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+}
+
+.fatigue-controls {
+    margin-top: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.fatigue-slider {
+    width: 100%;
+    margin: 10px 0;
+    height: 20px;
+}
+
+.save-button {
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 20px;
+    font-size: 16px;
+    width: 100%;
+}
+
+.save-button:hover {
+    background: #1976D2;
+}
+
+.history-item {
+    margin-bottom: 20px;
+    padding: 20px;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-left: 4px solid;
+    position: relative;
+    user-select: none;
+    touch-action: none;
+}
+
+.history-date {
+    color: #666;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+}
+
+.fatigue-bar-container {
+    width: 100%;
+    height: 20px;
+    background: #f0f0f0;
+    border-radius: 10px;
+    margin: 5px 0;
+    overflow: hidden;
+}
+
+.fatigue-bar {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.fatigue-group {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.fatigue-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #333;
+}
+
+.fatigue-value {
+    font-weight: bold;
+}
+
+.history-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.history-title h3 {
+    margin: 0;
+}
+
+.delete-options {
+    display: none;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 1;
+}
+
+.delete-option {
+    padding: 8px 16px;
+    cursor: pointer;
+    color: #333;
+    transition: background-color 0.2s;
+}
+
+.delete-option:hover {
+    background: #f5f5f5;
+}
+
+.delete-option.delete-all {
+    color: #dc3545;
+    border-top: 1px solid #eee;
+} 
