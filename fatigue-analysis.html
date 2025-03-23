@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>작업 피로도 분석</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { background: #f5f5f5; }
+        
+        .header { 
+            background: #2196F3; 
+            color: white; 
+            padding: 16px; 
+            text-align: center; 
+            position: fixed; 
+            top: 0; 
+            width: 100%; 
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-button {
+            background: none;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .content { 
+            margin-top: 60px; 
+            padding: 16px; 
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .work-type-card {
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .work-type-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .work-type-icon {
+            font-size: 32px;
+            margin-right: 16px;
+        }
+
+        .work-type-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .fatigue-controls {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        .fatigue-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+        }
+
+        .fatigue-label {
+            width: 80px;
+            font-weight: bold;
+        }
+
+        .fatigue-slider {
+            flex: 1;
+            margin: 0 16px;
+        }
+
+        .fatigue-value {
+            width: 60px;
+            text-align: right;
+        }
+
+        .chart-container {
+            margin-top: 20px;
+            height: 300px;
+        }
+
+        .save-button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+
+        .save-button:hover {
+            background: #1976D2;
+        }
+
+        .my-info {
+            display: none;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .info-header {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #2196F3;
+        }
+
+        .info-section {
+            margin-bottom: 24px;
+        }
+
+        .info-title {
+            font-size: 18px;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .recommendation {
+            background: #e3f2fd;
+            padding: 12px;
+            border-radius: 4px;
+            margin-top: 8px;
+        }
+
+        .alert {
+            color: #f44336;
+            margin-top: 8px;
+        }
+
+        .download-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 16px;
+            margin-left: 16px;
+        }
+        
+        .upload-button {
+            background: #FF9800;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="nav-button" onclick="showMainScreen()">작업 분석</button>
+        <h1>작업 피로도 분석</h1>
+        <button class="nav-button" onclick="showMyInfo()">내 정보</button>
+    </div>
+
+    <div class="content">
+        <div id="mainScreen">
+            <!-- 작업 유형별 카드가 여기에 동적으로 추가됨 -->
+        </div>
+
+        <div id="myInfo" class="my-info">
+            <div class="info-header">내 피로도 분석</div>
+            <div class="button-group">
+                <button class="download-button" onclick="downloadData()">데이터 다운로드</button>
+                <input type="file" id="fileInput" accept=".json" onchange="uploadData(event)">
+                <button class="upload-button" onclick="document.getElementById('fileInput').click()">데이터 불러오기</button>
+            </div>
+            <!-- 저장된 피로도 정보가 여기에 동적으로 추가됨 -->
+        </div>
+    </div>
+
+    <script>
+        const defaultWorkTypes = [
+            {
+                id: "picking",
+                title: "피킹",
+                icon: "🛒",
+                color: "#2196F3",
+                defaultFatigue: {
+                    shoulder: 80,
+                    back: 70,
+                    legs: 85,
+                    wrist: 60,
+                    overall: 75
+                }
+            },
+            {
+                id: "packing",
+                title: "패킹",
+                icon: "📦",
+                color: "#4CAF50",
+                defaultFatigue: {
+                    shoulder: 65,
+                    back: 60,
+                    legs: 40,
+                    wrist: 75,
+                    overall: 60
+                }
+            },
+            {
+                id: "sorting",
+                title: "소팅",
+                icon: "📋",
+                color: "#FF9800",
+                defaultFatigue: {
+                    shoulder: 70,
+                    back: 65,
+                    legs: 75,
+                    wrist: 55,
+                    overall: 65
+                }
+            },
+            {
+                id: "loading",
+                title: "상하차",
+                icon: "🚛",
+                color: "#F44336",
+                defaultFatigue: {
+                    shoulder: 85,
+                    back: 90,
+                    legs: 80,
+                    wrist: 70,
+                    overall: 85
+                }
+            },
+            {
+                id: "walking",
+                title: "이동/운반(도보)",
+                icon: "🚶",
+                color: "#9C27B0",
+                defaultFatigue: {
+                    shoulder: 60,
+                    back: 75,
+                    legs: 90,
+                    wrist: 50,
+                    overall: 70
+                }
+            },
+            {
+                id: "equipment",
+                title: "이동/운반(장비)",
+                icon: "🏗️",
+                color: "#009688",
+                defaultFatigue: {
+                    shoulder: 50,
+                    back: 65,
+                    legs: 45,
+                    wrist: 55,
+                    overall: 55
+                }
+            },
+            {
+                id: "other",
+                title: "기타",
+                icon: "⚡",
+                color: "#757575",
+                defaultFatigue: {
+                    shoulder: 45,
+                    back: 50,
+                    legs: 55,
+                    wrist: 45,
+                    overall: 50
+                }
+            }
+        ];
+
+        let charts = {};
+        let savedData = {
+            lastUpdate: "",
+            workTypes: {}
+        };
+
+        function renderWorkTypes() {
+            const mainScreen = document.getElementById("mainScreen");
+            mainScreen.innerHTML = defaultWorkTypes.map(work => {
+                const savedFatigue = getSavedFatigue(work.id);
+                const fatigue = savedFatigue || work.defaultFatigue;
+                
+                return `
+                    <div class="work-type-card" style="border-left: 4px solid ${work.color}">
+                        <div class="work-type-header">
+                            <span class="work-type-icon">${work.icon}</span>
+                            <span class="work-type-title">${work.title}</span>
+                        </div>
+                        <div class="fatigue-controls">
+                            ${renderFatigueControls(work.id, fatigue)}
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chart-${work.id}"></canvas>
+                        </div>
+                        <button class="save-button" onclick="saveFatigue('${work.id}')" style="background-color: ${work.color}">
+                            저장하기
+                        </button>
+                    </div>
+                `;
+            }).join("");
+
+            // 차트 생성
+            defaultWorkTypes.forEach(work => {
+                const savedFatigue = getSavedFatigue(work.id);
+                const fatigue = savedFatigue || work.defaultFatigue;
+                createFatigueChart(work.id, fatigue);
+            });
+        }
+
+        function renderFatigueControls(workId, fatigue) {
+            const parts = [
+                { key: 'shoulder', label: '어깨' },
+                { key: 'back', label: '허리' },
+                { key: 'legs', label: '다리' },
+                { key: 'wrist', label: '손목' },
+                { key: 'overall', label: '전체' }
+            ];
+
+            return parts.map(part => `
+                <div class="fatigue-item">
+                    <span class="fatigue-label">${part.label}</span>
+                    <input type="range" 
+                           class="fatigue-slider" 
+                           id="${workId}-${part.key}" 
+                           value="${fatigue[part.key]}" 
+                           min="0" 
+                           max="100" 
+                           oninput="updateFatigue('${workId}', '${part.key}', this.value)">
+                    <span class="fatigue-value" id="${workId}-${part.key}-value">
+                        ${fatigue[part.key]}%
+                    </span>
+                </div>
+            `).join("");
+        }
+
+        function updateFatigue(workId, part, value) {
+            document.getElementById(`${workId}-${part}-value`).textContent = `${value}%`;
+            
+            const fatigue = {
+                shoulder: parseInt(document.getElementById(`${workId}-shoulder`).value),
+                back: parseInt(document.getElementById(`${workId}-back`).value),
+                legs: parseInt(document.getElementById(`${workId}-legs`).value),
+                wrist: parseInt(document.getElementById(`${workId}-wrist`).value),
+                overall: parseInt(document.getElementById(`${workId}-overall`).value)
+            };
+
+            if (charts[workId]) {
+                charts[workId].data.datasets[0].data = [
+                    fatigue.shoulder,
+                    fatigue.back,
+                    fatigue.legs,
+                    fatigue.wrist,
+                    fatigue.overall
+                ];
+                charts[workId].update();
+            }
+        }
+
+        function createFatigueChart(workId, fatigue) {
+            const ctx = document.getElementById(`chart-${workId}`).getContext('2d');
+            charts[workId] = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['어깨', '허리', '다리', '손목', '전체'],
+                    datasets: [{
+                        label: '피로도 수준',
+                        data: [
+                            fatigue.shoulder,
+                            fatigue.back,
+                            fatigue.legs,
+                            fatigue.wrist,
+                            fatigue.overall
+                        ],
+                        backgroundColor: 'rgba(33, 150, 243, 0.2)',
+                        borderColor: 'rgba(33, 150, 243, 1)',
+                        pointBackgroundColor: 'rgba(33, 150, 243, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(33, 150, 243, 1)'
+                    }]
+                },
+                options: {
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 20
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function downloadData() {
+            const dataStr = JSON.stringify(savedData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'fatigue-data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function uploadData(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        savedData = JSON.parse(e.target.result);
+                        renderWorkTypes();
+                        renderMyInfo();
+                        alert('데이터를 성공적으로 불러왔습니다.');
+                    } catch (error) {
+                        alert('데이터 파일 형식이 올바르지 않습니다.');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function saveFatigue(workId) {
+            const fatigue = {
+                shoulder: parseInt(document.getElementById(`${workId}-shoulder`).value),
+                back: parseInt(document.getElementById(`${workId}-back`).value),
+                legs: parseInt(document.getElementById(`${workId}-legs`).value),
+                wrist: parseInt(document.getElementById(`${workId}-wrist`).value),
+                overall: parseInt(document.getElementById(`${workId}-overall`).value)
+            };
+
+            savedData.workTypes[workId] = fatigue;
+            savedData.lastUpdate = new Date().toISOString();
+            
+            downloadData();
+            alert('피로도 설정이 저장되었습니다.');
+        }
+
+        function getSavedFatigue(workId) {
+            return savedData.workTypes[workId] || null;
+        }
+
+        function showMainScreen() {
+            document.getElementById("mainScreen").style.display = "block";
+            document.getElementById("myInfo").style.display = "none";
+        }
+
+        function showMyInfo() {
+            document.getElementById("mainScreen").style.display = "none";
+            document.getElementById("myInfo").style.display = "block";
+            renderMyInfo();
+        }
+
+        function renderMyInfo() {
+            const myInfo = document.getElementById("myInfo");
+            let content = '<div class="info-header">내 피로도 분석</div>';
+            content += '<div class="button-group"><button class="download-button" onclick="downloadData()">데이터 다운로드</button><input type="file" id="fileInput" accept=".json" onchange="uploadData(event)"><button class="upload-button" onclick="document.getElementById(\'fileInput\').click()">데이터 불러오기</button></div>';
+
+            defaultWorkTypes.forEach(work => {
+                const savedFatigue = getSavedFatigue(work.id);
+                if (savedFatigue) {
+                    content += `
+                        <div class="info-section">
+                            <div class="info-title">${work.icon} ${work.title}</div>
+                            <div class="chart-container">
+                                <canvas id="myinfo-chart-${work.id}"></canvas>
+                            </div>
+                            ${renderFatigueAnalysis(work, savedFatigue)}
+                        </div>
+                    `;
+                }
+            });
+
+            myInfo.innerHTML = content;
+
+            // 차트 다시 생성
+            defaultWorkTypes.forEach(work => {
+                const savedFatigue = getSavedFatigue(work.id);
+                if (savedFatigue) {
+                    createMyInfoChart(work.id, savedFatigue);
+                }
+            });
+        }
+
+        function createMyInfoChart(workId, fatigue) {
+            const ctx = document.getElementById(`myinfo-chart-${workId}`).getContext('2d');
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['어깨', '허리', '다리', '손목', '전체'],
+                    datasets: [{
+                        label: '피로도 수준',
+                        data: [
+                            fatigue.shoulder,
+                            fatigue.back,
+                            fatigue.legs,
+                            fatigue.wrist,
+                            fatigue.overall
+                        ],
+                        backgroundColor: 'rgba(33, 150, 243, 0.2)',
+                        borderColor: 'rgba(33, 150, 243, 1)',
+                        pointBackgroundColor: 'rgba(33, 150, 243, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(33, 150, 243, 1)'
+                    }]
+                },
+                options: {
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 20
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderFatigueAnalysis(work, fatigue) {
+            let analysis = '';
+            let highFatigueParts = [];
+
+            if (fatigue.shoulder >= 80) highFatigueParts.push('어깨');
+            if (fatigue.back >= 80) highFatigueParts.push('허리');
+            if (fatigue.legs >= 80) highFatigueParts.push('다리');
+            if (fatigue.wrist >= 80) highFatigueParts.push('손목');
+
+            if (highFatigueParts.length > 0) {
+                analysis += `
+                    <div class="alert">
+                        ⚠️ ${highFatigueParts.join(', ')} 부위의 피로도가 높습니다.
+                    </div>
+                `;
+            }
+
+            analysis += `
+                <div class="recommendation">
+                    💡 추천사항:<br>
+                    ${getRecommendations(work.id, fatigue)}
+                </div>
+            `;
+
+            return analysis;
+        }
+
+        function getRecommendations(workId, fatigue) {
+            const recommendations = {
+                shoulder: '• 어깨 스트레칭을 주기적으로 실시하세요.<br>• 물건을 들어올릴 때 어깨 높이를 넘지 않도록 주의하세요.',
+                back: '• 허리를 굽힐 때 무릎을 구부리세요.<br>• 허리 보호대 착용을 고려하세요.',
+                legs: '• 적절한 휴식과 다리 스트레칭이 필요합니다.<br>• 편안한 작업화를 착용하세요.',
+                wrist: '• 손목 보호대 착용을 권장합니다.<br>• 손목 각도를 주의하여 작업하세요.'
+            };
+
+            let result = '';
+            if (fatigue.shoulder >= 70) result += recommendations.shoulder + '<br>';
+            if (fatigue.back >= 70) result += recommendations.back + '<br>';
+            if (fatigue.legs >= 70) result += recommendations.legs + '<br>';
+            if (fatigue.wrist >= 70) result += recommendations.wrist + '<br>';
+
+            return result || '현재 피로도 수준이 양호합니다. 지속적인 관리를 해주세요.';
+        }
+
+        // 초기 렌더링
+        renderWorkTypes();
+    </script>
+</body>
+</html> 
