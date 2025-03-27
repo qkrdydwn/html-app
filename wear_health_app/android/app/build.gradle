@@ -1,0 +1,42 @@
+def localPropertiesFile = new File(rootProject.projectDir, "local.properties")
+def properties = new Properties()
+
+assert localPropertiesFile.exists()
+localPropertiesFile.withReader("UTF-8") { reader -> properties.load(reader) }
+
+def flutterRoot = properties.getProperty("flutter.sdk")
+assert flutterRoot != null, "flutter.sdk not set in local.properties"
+apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
+
+android {
+    namespace "com.example.wear_health_app"
+    compileSdkVersion flutter.compileSdkVersion
+    ndkVersion "27.0.12077973"
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    defaultConfig {
+        applicationId "com.example.wear_health_app"
+        minSdkVersion flutter.minSdkVersion
+        targetSdkVersion flutter.targetSdkVersion
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+        }
+    }
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+} 

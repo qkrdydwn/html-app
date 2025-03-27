@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>가민 워치 테스트</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            width: 100%;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:active {
+            background-color: #45a049;
+        }
+        #status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+        }
+        #heartRate {
+            font-size: 36px;
+            color: #dc3545;
+            text-align: center;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>가민 워치 연결 테스트</h1>
+        <button onclick="connectToWatch()">워치 연결하기</button>
+        <div id="status">상태: 연결 대기 중...</div>
+        <div id="heartRate"></div>
+        <div id="warning" class="warning"></div>
+    </div>
+
+    <script>
+        async function connectToWatch() {
+            try {
+                if (!navigator.bluetooth) {
+                    updateStatus('이 브라우저는 Web Bluetooth API를 지원하지 않습니다. Chrome을 사용해주세요.');
+                    return;
+                }
+
+                updateStatus('가민 워치 검색 중...');
+
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [
+                        { namePrefix: 'Garmin' }
+                    ],
+                    optionalServices: ['heart_rate']
+                });
+
+                updateStatus(`'${device.name}' 발견! 연결 중...`);
+
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService('heart_rate');
+                const characteristic = await service.getCharacteristic('heart_rate_measurement');
+
+                await characteristic.startNotifications();
+                characteristic.addEventListener('characteristicvaluechanged', handleHeartRate);
+                
+                updateStatus('연결 완료! 심박수 모니터링 중...');
+
+                device.addEventListener('gattserverdisconnected', () => {
+                    updateStatus('연결이 끊어졌습니다.');
+                    document.getElementById('heartRate').textContent = '';
+                    hideWarning();
+                });
+
+            } catch (error) {
+                console.error(error);
+                updateStatus('오류 발생: ' + error.message);
+            }
+        }
+
+        function handleHeartRate(event) {
+            const value = event.target.value;
+            const heartRate = value.getUint8(1);
+            document.getElementById('heartRate').textContent = `${heartRate} BPM`;
+            
+            if (heartRate > 100) {
+                showWarning(`심박수가 높습니다 (${heartRate} BPM)`);
+            } else {
+                hideWarning();
+            }
+        }
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = '상태: ' + message;
+            console.log(message);
+        }
+
+        function showWarning(message) {
+            const warning = document.getElementById('warning');
+            warning.textContent = '⚠️ ' + message;
+            warning.style.display = 'block';
+        }
+
+        function hideWarning() {
+            document.getElementById('warning').style.display = 'none';
+        }
+    </script>
+</body>
+</html> 

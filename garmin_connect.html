@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Garmin Connect</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #heartRate {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Garmin 워치 연결</h1>
+    <button onclick="connectGarmin()">워치 연결하기</button>
+    <div id="heartRate">심박수: --</div>
+
+    <script>
+        async function connectGarmin() {
+            try {
+                // Garmin 워치 찾기
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [
+                        { namePrefix: 'Garmin' },
+                        { services: ['heart_rate'] }
+                    ]
+                });
+
+                console.log('선택된 기기:', device.name);
+
+                // 워치에 연결
+                const server = await device.gatt.connect();
+                console.log('연결됨');
+
+                // 심박수 서비스 가져오기
+                const service = await server.getPrimaryService('heart_rate');
+                const characteristic = await service.getCharacteristic('heart_rate_measurement');
+
+                // 심박수 데이터 수신 시작
+                await characteristic.startNotifications();
+                characteristic.addEventListener('characteristicvaluechanged', handleHeartRate);
+
+            } catch (error) {
+                console.error('에러:', error);
+                alert('연결 실패: ' + error);
+            }
+        }
+
+        function handleHeartRate(event) {
+            const value = event.target.value;
+            const heartRate = value.getUint8(1);
+            document.getElementById('heartRate').textContent = '심박수: ' + heartRate + ' bpm';
+            
+            // 피로도 경고 (심박수 100 이상)
+            if (heartRate > 100) {
+                alert('피로도 경고! 현재 심박수: ' + heartRate + ' bpm');
+            }
+        }
+    </script>
+</body>
+</html> 

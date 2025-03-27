@@ -4,13 +4,512 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>쿠팡 작업 관리</title>
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Arial", sans-serif; }
+        body { background-color: #f5f5f5; }
+        
+        .header { 
+            background-color: #2196F3; 
+            color: white; 
+            padding: 16px; 
+            text-align: center; 
+            position: fixed; 
+            top: 0; 
+            width: 100%; 
+            z-index: 1000;
+        }
+        
+        .header h1 { text-align: center; }
+        
+        .content {
+            margin-top: 80px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .work-type-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 100%;
+        }
+
+        .my-info-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 100%;
+            text-align: center;
+            margin-top: 10px;
+            border: 2px dashed #2196F3;
+        }
+
+        .watch-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 100%;
+            margin-bottom: 20px;
+            border: 2px solid #2196F3;
+        }
+
+        .watch-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .watch-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .heart-rate {
+            font-size: 28px;
+            font-weight: bold;
+            color: #e91e63;
+        }
+
+        .watch-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .watch-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .connect-button {
+            background: #2196F3;
+            color: white;
+        }
+
+        .disconnect-button {
+            background: #f44336;
+            color: white;
+            display: none;
+        }
+
+        .watch-button:hover {
+            opacity: 0.9;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ccc;
+        }
+
+        .status-connected {
+            background: #4CAF50;
+        }
+
+        .my-info-card:hover {
+            transform: translateY(-5px);
+            background: #e3f2fd;
+        }
+        .work-type-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .detail-screen, .history-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 2000;
+            overflow-y: auto;
+        }
+        
+        .detail-header {
+            background: #2196F3;
+            color: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .back-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            margin-right: 16px;
+        }
+        
+        .detail-content {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .detail-content h3 {
+            color: #1976D2;
+            margin: 20px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #e3f2fd;
+        }
+
+        .detail-content ul {
+            list-style: none;
+            margin-left: 20px;
+        }
+
+        .detail-content li {
+            margin: 10px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .detail-content li:before {
+            content: "•";
+            color: #2196F3;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        
+        .fatigue-controls {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .heart-rate-settings {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .heart-rate-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        .heart-rate-table th,
+        .heart-rate-table td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+
+        .heart-rate-table th {
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+
+        .heart-rate-range-inputs {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .heart-rate-range-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .heart-rate-range-input input {
+            width: 80px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .heart-rate-alert {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .heart-rate-alert.warning {
+            background: #fff3e0;
+            color: #e65100;
+            border: 1px solid #ffb74d;
+        }
+
+        .heart-rate-alert.danger {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef5350;
+        }
+        
+        .fatigue-slider {
+            width: 100%;
+            margin: 10px 0;
+            height: 20px;
+        }
+        
+        .save-button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 16px;
+            width: 100%;
+        }
+        
+        .save-button:hover {
+            background: #1976D2;
+        }
+
+        .history-item {
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid;
+            position: relative;
+            user-select: none;
+            touch-action: none;
+        }
+
+        .history-date {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .fatigue-bar-container {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            margin: 5px 0;
+            overflow: hidden;
+        }
+
+        .fatigue-bar {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .fatigue-group {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .fatigue-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .fatigue-value {
+            font-weight: bold;
+        }
+
+        .history-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .history-title h3 {
+            margin: 0;
+        }
+
+        .delete-options {
+            display: none;
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 1;
+        }
+
+        .delete-option {
+            padding: 8px 16px;
+            cursor: pointer;
+            color: #333;
+            transition: background-color 0.2s;
+        }
+
+        .delete-option:hover {
+            background: #f5f5f5;
+        }
+
+        .delete-option.delete-all {
+            color: #dc3545;
+            border-top: 1px solid #eee;
+        }
+
+        .heart-rate-display {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .heart-rate-value {
+            font-size: 48px;
+            font-weight: bold;
+            color: #e91e63;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .heart-rate-status {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .heart-rate-status.normal {
+            color: #4CAF50;
+        }
+
+        .heart-rate-status.warning {
+            color: #FF9800;
+        }
+
+        .heart-rate-status.danger {
+            color: #f44336;
+        }
+
+        .heart-rate-chart {
+            width: 100%;
+            height: 100px;
+            margin-top: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .heart-rate-bar {
+            position: absolute;
+            bottom: 0;
+            width: 4px;
+            background: #e91e63;
+            transition: height 0.3s ease;
+        }
+
+        .heart-rate-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .heart-rate-range {
+            display: flex;
+            gap: 20px;
+        }
+
+        .range-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .range-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .range-normal { background: #4CAF50; }
+        .range-warning { background: #FF9800; }
+        .range-danger { background: #f44336; }
+    </style>
 </head>
 <body>
     <div class="header">
         <h1>작업 유형 선택</h1>
     </div>
-    <div class="content" id="mainScreen"></div>
+    <div class="content" id="mainScreen">
+        <div class="watch-card">
+            <div class="watch-status">
+                <div class="watch-info">
+                    <div class="status-indicator" id="watchStatus"></div>
+                    <span id="watchStatusText">워치 연결 대기중</span>
+                </div>
+            </div>
+            <div class="heart-rate-display">
+                <div class="heart-rate-value">
+                    <span>❤️</span>
+                    <span id="heartRate">--</span>
+                    <span>bpm</span>
+                </div>
+                <div class="heart-rate-status" id="heartRateStatus">연결 대기중</div>
+            </div>
+            <div class="heart-rate-chart" id="heartRateChart"></div>
+            <div class="heart-rate-info">
+                <div class="heart-rate-range">
+                    <div class="range-item">
+                        <div class="range-dot range-normal"></div>
+                        <span>정상 (60-100)</span>
+                    </div>
+                    <div class="range-item">
+                        <div class="range-dot range-warning"></div>
+                        <span>주의 (100-120)</span>
+                    </div>
+                    <div class="range-item">
+                        <div class="range-dot range-danger"></div>
+                        <span>위험 (150+)</span>
+                    </div>
+                </div>
+                <div id="lastUpdate">마지막 업데이트: --:--:--</div>
+            </div>
+            <div class="watch-controls">
+                <button class="watch-button connect-button" id="connectWatch">워치 연결</button>
+                <button class="watch-button disconnect-button" id="disconnectWatch">연결 해제</button>
+            </div>
+        </div>
+    </div>
     
     <div class="detail-screen" id="detailScreen">
         <div class="detail-header" id="detailHeader">
@@ -28,7 +527,874 @@
         <div class="detail-content" id="historyContent"></div>
     </div>
 
-    <script src="workTypes.js"></script>
-    <script src="app.js"></script>
+    <script>
+        const workTypes = [
+            {
+                id: 'picking',
+                title: '피킹',
+                icon: '🛒',
+                color: '#4CAF50',
+                description: '상품을 선반에서 찾아 수집하는 작업',
+                requirements: [
+                    '정확한 상품 식별능력',
+                    '신속한 이동능력',
+                    '체력',
+                    '집중력',
+                    '공간 파악 능력'
+                ],
+                precautions: [
+                    '무거운 물건은 허리를 굽히지 말고 무릎을 굽혀 들어올리기',
+                    '상품 위치 확인 후 이동하기',
+                    '계단 이용 시 난간 잡기',
+                    '무리한 동작 피하기',
+                    '피로도를 체크하며 적절한 휴식 취하기'
+                ],
+                equipment: [
+                    '스캐너',
+                    '카트',
+                    '안전화'
+                ],
+                initialFatigue: {
+                    physical: 75,
+                    mental: 60,
+                    stress: 65,
+                    bodyParts: {
+                        neck: 65,
+                        back: 80,
+                        shoulder: 70,
+                        leg: 85,
+                        wrist: 60
+                    }
+                }
+            },
+            {
+                id: 'packing',
+                title: '패킹',
+                icon: '📦',
+                color: '#2196F3',
+                description: '상품을 포장하고 배송 준비하는 작업',
+                requirements: [
+                    '신속한 포장능력',
+                    '정확한 라벨링',
+                    '꼼꼼함',
+                    '손재주',
+                    '체력'
+                ],
+                precautions: [
+                    '포장 규격 준수하기',
+                    '라벨 정확히 부착하기',
+                    '날카로운 도구 사용 시 주의',
+                    '반복 동작 시 손목 스트레칭하기',
+                    '포장재 정리정돈 철저히 하기'
+                ],
+                equipment: [
+                    '테이프건',
+                    '박스',
+                    '라벨프린터'
+                ],
+                initialFatigue: {
+                    physical: 65,
+                    mental: 70,
+                    stress: 60,
+                    bodyParts: {
+                        neck: 70,
+                        back: 60,
+                        shoulder: 75,
+                        leg: 50,
+                        wrist: 85
+                    }
+                }
+            },
+            {
+                id: 'sorting',
+                title: '소팅',
+                icon: '🔄',
+                color: '#FF9800',
+                description: '상품을 종류별, 배송지별로 분류하는 작업',
+                requirements: [
+                    '신속한 판단력',
+                    '정확한 분류능력',
+                    '집중력',
+                    '체력',
+                    '공간 활용 능력'
+                ],
+                precautions: [
+                    '상품 분류 기준 정확히 확인하기',
+                    '무거운 물건 들어올릴 때 허리 조심하기',
+                    '이동 경로 확보하기',
+                    '분류된 상품 정확히 라벨링하기',
+                    '작업장 정리정돈 유지하기'
+                ],
+                equipment: [
+                    '분류 테이블',
+                    '스캐너',
+                    '라벨'
+                ],
+                initialFatigue: {
+                    physical: 70,
+                    mental: 75,
+                    stress: 70,
+                    bodyParts: {
+                        neck: 75,
+                        back: 75,
+                        shoulder: 65,
+                        leg: 70,
+                        wrist: 60
+                    }
+                }
+            },
+            {
+                id: 'loading',
+                title: '상하차',
+                icon: '🚛',
+                color: '#9C27B0',
+                description: '상품을 차량에 싣고 내리는 작업',
+                requirements: [
+                    '체력',
+                    '안전의식',
+                    '팀워크',
+                    '신속성',
+                    '공간 활용 능력'
+                ],
+                precautions: [
+                    '중량물 취급 시 팀원과 협력하기',
+                    '차량 이동 시 주변 확인하기',
+                    '적재 한도 준수하기',
+                    '미끄럼 방지를 위한 안전화 착용하기',
+                    '날씨 조건 확인하고 대비하기'
+                ],
+                equipment: [
+                    '지게차',
+                    '운반카트',
+                    '안전모'
+                ],
+                initialFatigue: {
+                    physical: 85,
+                    mental: 55,
+                    stress: 75,
+                    bodyParts: {
+                        neck: 80,
+                        back: 90,
+                        shoulder: 85,
+                        leg: 80,
+                        wrist: 70
+                    }
+                }
+            },
+            {
+                id: 'walking',
+                title: '워킹',
+                icon: '👣',
+                color: '#795548',
+                description: '물류센터 내 보행 이동 작업',
+                requirements: [
+                    '체력',
+                    '방향감각',
+                    '안전의식',
+                    '신속성',
+                    '집중력'
+                ],
+                precautions: [
+                    '지정된 보행로 이용하기',
+                    '주변 차량 및 장비 주의하기',
+                    '적절한 보행 속도 유지하기',
+                    '미끄러운 바닥 주의하기',
+                    '장시간 보행 시 휴식 취하기'
+                ],
+                equipment: [
+                    '안전화',
+                    '무전기',
+                    '작업복'
+                ],
+                initialFatigue: {
+                    physical: 70,
+                    mental: 45,
+                    stress: 50,
+                    bodyParts: {
+                        neck: 45,
+                        back: 65,
+                        shoulder: 40,
+                        leg: 90,
+                        wrist: 30
+                    }
+                }
+            },
+            {
+                id: 'equipment',
+                title: '장비운용',
+                icon: '🚜',
+                color: '#607D8B',
+                description: '지게차, 운반기기 등 장비 조작 작업',
+                requirements: [
+                    '장비 조작 능력',
+                    '안전 의식',
+                    '주의력',
+                    '판단력',
+                    '팀워크'
+                ],
+                precautions: [
+                    '장비 시동 전 안전점검 실시하기',
+                    '규정 속도 준수하기',
+                    '화물 적재 한도 확인하기',
+                    '주변 작업자 안전 확인하기',
+                    '장비 이상 시 즉시 보고하기'
+                ],
+                equipment: [
+                    '지게차',
+                    '안전모',
+                    '무전기'
+                ],
+                initialFatigue: {
+                    physical: 60,
+                    mental: 80,
+                    stress: 75,
+                    bodyParts: {
+                        neck: 85,
+                        back: 70,
+                        shoulder: 65,
+                        leg: 55,
+                        wrist: 75
+                    }
+                }
+            },
+            {
+                id: 'other',
+                title: '기타작업',
+                icon: '🔧',
+                color: '#455A64',
+                description: '기타 물류센터 내 보조 작업',
+                requirements: [
+                    '기본 체력',
+                    '협동심',
+                    '의사소통 능력',
+                    '적응력',
+                    '문제해결 능력'
+                ],
+                precautions: [
+                    '작업 지시사항 정확히 확인하기',
+                    '안전수칙 준수하기',
+                    '동료와 원활한 소통하기',
+                    '작업환경 정리정돈하기',
+                    '이상상황 발생 시 즉시 보고하기'
+                ],
+                equipment: [
+                    '기본 공구',
+                    '안전화',
+                    '작업복'
+                ],
+                initialFatigue: {
+                    physical: 55,
+                    mental: 50,
+                    stress: 45,
+                    bodyParts: {
+                        neck: 50,
+                        back: 60,
+                        shoulder: 55,
+                        leg: 65,
+                        wrist: 50
+                    }
+                }
+            }
+        ];
+
+        let watchDevice = null;
+        let heartRateCharacteristic = null;
+        let isWatchConnected = false;
+        let heartRateHistory = [];
+        const MAX_HISTORY = 20;
+
+        async function connectWatch() {
+            try {
+                watchDevice = await navigator.bluetooth.requestDevice({
+                    filters: [
+                        { namePrefix: "Galaxy Watch" },
+                        { services: ['heart_rate'] }
+                    ]
+                });
+
+                const server = await watchDevice.gatt.connect();
+                const service = await server.getPrimaryService('heart_rate');
+                heartRateCharacteristic = await service.getCharacteristic('heart_rate_measurement');
+                
+                await heartRateCharacteristic.startNotifications();
+                heartRateCharacteristic.addEventListener('characteristicvaluechanged', handleHeartRateData);
+                
+                isWatchConnected = true;
+                updateWatchStatus(true);
+                document.getElementById('connectWatch').style.display = 'none';
+                document.getElementById('disconnectWatch').style.display = 'block';
+            } catch (error) {
+                console.error('워치 연결 실패:', error);
+                alert('워치 연결에 실패했습니다.');
+            }
+        }
+
+        function disconnectWatch() {
+            if (heartRateCharacteristic) {
+                heartRateCharacteristic.removeEventListener('characteristicvaluechanged', handleHeartRateData);
+                heartRateCharacteristic.stopNotifications();
+            }
+            if (watchDevice && watchDevice.gatt.connected) {
+                watchDevice.gatt.disconnect();
+            }
+            isWatchConnected = false;
+            updateWatchStatus(false);
+            document.getElementById('connectWatch').style.display = 'block';
+            document.getElementById('disconnectWatch').style.display = 'none';
+            document.getElementById('heartRate').textContent = '--';
+            document.getElementById('heartRateStatus').textContent = '연결 해제됨';
+            document.getElementById('heartRateStatus').className = 'heart-rate-status';
+            heartRateHistory = [];
+            updateHeartRateChart();
+        }
+
+        function handleHeartRateData(event) {
+            const value = event.target.value;
+            const heartRate = value.getUint8(1);
+            const timestamp = new Date();
+            
+            // 심박수 데이터 저장
+            heartRateHistory.push(heartRate);
+            if (heartRateHistory.length > MAX_HISTORY) {
+                heartRateHistory.shift();
+            }
+            
+            // UI 업데이트
+            document.getElementById('heartRate').textContent = heartRate;
+            document.getElementById('lastUpdate').textContent = 
+                `마지막 업데이트: ${timestamp.toLocaleTimeString()}`;
+            
+            // 상태 업데이트
+            updateHeartRateStatus(heartRate);
+            
+            // 차트 업데이트
+            updateHeartRateChart();
+
+            // 심박수 경고 체크
+            checkHeartRateAlert(heartRate);
+        }
+
+        function checkHeartRateAlert(heartRate) {
+            const minHeartRate = parseInt(document.getElementById('minHeartRate').value) || 80;
+            const maxHeartRate = parseInt(document.getElementById('maxHeartRate').value) || 120;
+            const alertElement = document.getElementById('heartRateAlert');
+
+            if (heartRate > maxHeartRate) {
+                alertElement.textContent = `경고: 심박수가 설정된 최대값(${maxHeartRate})을 초과했습니다. 작업 강도를 조절해주세요.`;
+                alertElement.className = 'heart-rate-alert danger';
+                alertElement.style.display = 'block';
+            } else if (heartRate < minHeartRate) {
+                alertElement.textContent = `주의: 심박수가 설정된 최소값(${minHeartRate}) 미만입니다.`;
+                alertElement.className = 'heart-rate-alert warning';
+                alertElement.style.display = 'block';
+            } else {
+                alertElement.style.display = 'none';
+            }
+        }
+
+        function setupHeartRateInputs() {
+            const minInput = document.getElementById('minHeartRate');
+            const maxInput = document.getElementById('maxHeartRate');
+
+            minInput.addEventListener('change', validateHeartRateRange);
+            maxInput.addEventListener('change', validateHeartRateRange);
+        }
+
+        function validateHeartRateRange() {
+            const minHeartRate = parseInt(document.getElementById('minHeartRate').value) || 80;
+            const maxHeartRate = parseInt(document.getElementById('maxHeartRate').value) || 120;
+
+            if (minHeartRate > maxHeartRate) {
+                alert('최소 심박수는 최대 심박수보다 작아야 합니다.');
+                document.getElementById('minHeartRate').value = maxHeartRate;
+            }
+
+            if (maxHeartRate < minHeartRate) {
+                alert('최대 심박수는 최소 심박수보다 커야 합니다.');
+                document.getElementById('maxHeartRate').value = minHeartRate;
+            }
+        }
+
+        function updateHeartRateStatus(heartRate) {
+            const statusElement = document.getElementById('heartRateStatus');
+            statusElement.className = 'heart-rate-status';
+            
+            if (heartRate < 60) {
+                statusElement.textContent = '심박수 낮음';
+                statusElement.classList.add('warning');
+            } else if (heartRate <= 100) {
+                statusElement.textContent = '정상';
+                statusElement.classList.add('normal');
+            } else if (heartRate <= 120) {
+                statusElement.textContent = '심박수 높음';
+                statusElement.classList.add('warning');
+            } else {
+                statusElement.textContent = '위험';
+                statusElement.classList.add('danger');
+            }
+        }
+
+        function updateHeartRateChart() {
+            const chartElement = document.getElementById('heartRateChart');
+            chartElement.innerHTML = '';
+            
+            const maxHeartRate = Math.max(...heartRateHistory, 100);
+            const barWidth = chartElement.clientWidth / MAX_HISTORY;
+            
+            heartRateHistory.forEach((rate, index) => {
+                const bar = document.createElement('div');
+                bar.className = 'heart-rate-bar';
+                bar.style.left = `${index * barWidth}px`;
+                bar.style.height = `${(rate / maxHeartRate) * 100}%`;
+                
+                // 심박수 수준에 따른 색상 설정
+                if (rate > 120) {
+                    bar.style.background = '#f44336';
+                } else if (rate > 100) {
+                    bar.style.background = '#FF9800';
+                } else {
+                    bar.style.background = '#4CAF50';
+                }
+                
+                chartElement.appendChild(bar);
+            });
+        }
+
+        function updateWatchStatus(connected) {
+            const statusIndicator = document.getElementById('watchStatus');
+            const statusText = document.getElementById('watchStatusText');
+            
+            if (connected) {
+                statusIndicator.classList.add('status-connected');
+                statusText.textContent = '워치 연결됨';
+            } else {
+                statusIndicator.classList.remove('status-connected');
+                statusText.textContent = '워치 연결 대기중';
+            }
+        }
+
+        function renderWorkTypes() {
+            const mainScreen = document.getElementById('mainScreen');
+            mainScreen.innerHTML = `
+                <div class="watch-card">
+                    <div class="watch-status">
+                        <div class="watch-info">
+                            <div class="status-indicator" id="watchStatus"></div>
+                            <span id="watchStatusText">워치 연결 대기중</span>
+                        </div>
+                    </div>
+                    <div class="heart-rate-display">
+                        <div class="heart-rate-value">
+                            <span>❤️</span>
+                            <span id="heartRate">--</span>
+                            <span>bpm</span>
+                        </div>
+                        <div class="heart-rate-status" id="heartRateStatus">연결 대기중</div>
+                    </div>
+                    <div class="heart-rate-chart" id="heartRateChart"></div>
+                    <div class="heart-rate-info">
+                        <div class="heart-rate-range">
+                            <div class="range-item">
+                                <div class="range-dot range-normal"></div>
+                                <span>정상 (60-100)</span>
+                            </div>
+                            <div class="range-item">
+                                <div class="range-dot range-warning"></div>
+                                <span>주의 (100-120)</span>
+                            </div>
+                            <div class="range-item">
+                                <div class="range-dot range-danger"></div>
+                                <span>위험 (150+)</span>
+                            </div>
+                        </div>
+                        <div id="lastUpdate">마지막 업데이트: --:--:--</div>
+                    </div>
+                    <div class="watch-controls">
+                        <button class="watch-button connect-button" id="connectWatch">워치 연결</button>
+                        <button class="watch-button disconnect-button" id="disconnectWatch">연결 해제</button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('connectWatch').addEventListener('click', connectWatch);
+            document.getElementById('disconnectWatch').addEventListener('click', disconnectWatch);
+            
+            const workTypesContainer = document.createElement('div');
+            workTypesContainer.style.display = 'flex';
+            workTypesContainer.style.flexDirection = 'column';
+            workTypesContainer.style.gap = '20px';
+            
+            workTypes.forEach(workType => {
+                const card = document.createElement('div');
+                card.className = 'work-type-card';
+                card.style.borderLeft = `4px solid ${workType.color}`;
+                card.onclick = () => showWorkDetail(workType.id);
+                
+                card.innerHTML = `
+                    <h2>${workType.icon} ${workType.title}</h2>
+                    <p>${workType.description}</p>
+                `;
+                
+                workTypesContainer.appendChild(card);
+            });
+
+            const myInfoCard = document.createElement('div');
+            myInfoCard.className = 'my-info-card';
+            myInfoCard.onclick = showHistory;
+            myInfoCard.innerHTML = `
+                <h2>📊 내 정보</h2>
+                <p>나의 작업 기록 확인하기</p>
+            `;
+            workTypesContainer.appendChild(myInfoCard);
+            
+            mainScreen.appendChild(workTypesContainer);
+        }
+
+        function showWorkDetail(workId) {
+            const workType = workTypes.find(w => w.id === workId);
+            if (!workType) return;
+
+            document.getElementById('detailScreen').style.display = 'block';
+            document.getElementById('detailTitle').textContent = `${workType.icon} ${workType.title}`;
+            
+            const content = document.getElementById('detailContent');
+            content.innerHTML = `
+                <h3>작업 설명</h3>
+                <p>${workType.description}</p>
+                
+                <h3>필요 역량</h3>
+                <ul>${workType.requirements.map(req => `<li>${req}</li>`).join('')}</ul>
+                
+                <h3>작업시 유의사항</h3>
+                <ul>${workType.precautions.map(prec => `<li>${prec}</li>`).join('')}</ul>
+                
+                <h3>필요 장비</h3>
+                <ul>${workType.equipment.map(equip => `<li>${equip}</li>`).join('')}</ul>
+                
+                <div class="fatigue-controls">
+                    <div class="heart-rate-settings">
+                        <h3>심박수 설정</h3>
+                        <p>연령별 적정 심박수 안내</p>
+                        <table class="heart-rate-table">
+                            <tr>
+                                <th>연령 (세)</th>
+                                <th>중등도 강도 목표 범위 (50-70% bpm)</th>
+                                <th>고강도 목표 범위 (70-85% bpm)</th>
+                            </tr>
+                            <tr>
+                                <td>20</td>
+                                <td>100 - 140</td>
+                                <td>140 - 170</td>
+                            </tr>
+                            <tr>
+                                <td>30</td>
+                                <td>95 - 133</td>
+                                <td>133 - 162</td>
+                            </tr>
+                            <tr>
+                                <td>40</td>
+                                <td>90 - 126</td>
+                                <td>126 - 153</td>
+                            </tr>
+                            <tr>
+                                <td>50</td>
+                                <td>85 - 119</td>
+                                <td>119 - 145</td>
+                            </tr>
+                            <tr>
+                                <td>60</td>
+                                <td>80 - 112</td>
+                                <td>112 - 136</td>
+                            </tr>
+                            <tr>
+                                <td>70</td>
+                                <td>75 - 105</td>
+                                <td>105 - 128</td>
+                            </tr>
+                        </table>
+                        <div class="heart-rate-range-inputs">
+                            <div class="heart-rate-range-input">
+                                <label>최소 심박수:</label>
+                                <input type="number" id="minHeartRate" min="60" max="200" value="80">
+                            </div>
+                            <div class="heart-rate-range-input">
+                                <label>최대 심박수:</label>
+                                <input type="number" id="maxHeartRate" min="60" max="200" value="120">
+                            </div>
+                        </div>
+                        <div class="heart-rate-alert" id="heartRateAlert"></div>
+                    </div>
+
+                    <h3>피로도 분석</h3>
+                    <h4>전반적인 피로도</h4>
+                    <div>
+                        <label>신체적 피로도: <span id="physicalValue">${workType.initialFatigue.physical}</span>%</label>
+                        <input type="range" class="fatigue-slider" id="physical" value="${workType.initialFatigue.physical}" min="0" max="100">
+                    </div>
+                    <div>
+                        <label>정신적 피로도: <span id="mentalValue">${workType.initialFatigue.mental}</span>%</label>
+                        <input type="range" class="fatigue-slider" id="mental" value="${workType.initialFatigue.mental}" min="0" max="100">
+                    </div>
+                    <div>
+                        <label>스트레스 수준: <span id="stressValue">${workType.initialFatigue.stress}</span>%</label>
+                        <input type="range" class="fatigue-slider" id="stress" value="${workType.initialFatigue.stress}" min="0" max="100">
+                    </div>
+                    
+                    <h4>신체 부위별 피로도</h4>
+                    <div>
+                        <label>목: <span id="neckValue">${workType.initialFatigue.bodyParts.neck}</span>%</label>
+                        <input type="range" class="fatigue-slider" id="neck" value="${workType.initialFatigue.bodyParts.neck}" min="0" max="100">
+                    </div>
+                    <div>
+                        <label>허리: <span id="backValue">${workType.initialFatigue.bodyParts.back}</span>%</label>
+                        <input type="range" class="fatigue-slider" id="back" value="${workType.initialFatigue.bodyParts.back}" min="0" max="100">
+                    </div>
+                    <div>
+                        <label>어깨: <span id="shoulderValue">${workType.initialFatigue.bodyParts.shoulder}</span>%</label>
+                        <input type="range" class="fatigue-slider" id="shoulder" value="${workType.initialFatigue.bodyParts.shoulder}" min="0" max="100">
+                    </div>
+                    <div>
+                        <label>다리: <span id="legValue">${workType.initialFatigue.bodyParts.leg}</span>%</label>
+                        <input type="range" class="fatigue-slider" id="leg" value="${workType.initialFatigue.bodyParts.leg}" min="0" max="100">
+                    </div>
+                    <div>
+                        <label>손목: <span id="wristValue">${workType.initialFatigue.bodyParts.wrist}</span>%</label>
+                        <input type="range" class="fatigue-slider" id="wrist" value="${workType.initialFatigue.bodyParts.wrist}" min="0" max="100">
+                    </div>
+                    
+                    <button class="save-button" onclick="saveFatigueData('${workType.id}')">저장</button>
+                </div>
+            `;
+            
+            setupFatigueSliders();
+            setupHeartRateInputs();
+        }
+
+        function setupFatigueSliders() {
+            const sliders = document.querySelectorAll('.fatigue-slider');
+            sliders.forEach(slider => {
+                const valueSpan = document.getElementById(`${slider.id}Value`);
+                slider.oninput = () => valueSpan.textContent = slider.value;
+            });
+        }
+
+        function saveFatigueData(workId) {
+            const fatigueData = {
+                timestamp: new Date().toISOString(),
+                workType: workId,
+                physical: parseInt(document.getElementById('physical').value),
+                mental: parseInt(document.getElementById('mental').value),
+                stress: parseInt(document.getElementById('stress').value),
+                bodyParts: {
+                    neck: parseInt(document.getElementById('neck').value),
+                    back: parseInt(document.getElementById('back').value),
+                    shoulder: parseInt(document.getElementById('shoulder').value),
+                    leg: parseInt(document.getElementById('leg').value),
+                    wrist: parseInt(document.getElementById('wrist').value)
+                },
+                heartRateSettings: {
+                    min: parseInt(document.getElementById('minHeartRate').value) || 80,
+                    max: parseInt(document.getElementById('maxHeartRate').value) || 120
+                }
+            };
+            
+            let history = JSON.parse(localStorage.getItem('fatigueHistory') || '[]');
+            history.push(fatigueData);
+            localStorage.setItem('fatigueHistory', JSON.stringify(history));
+            
+            alert('피로도 데이터가 저장되었습니다.');
+        }
+
+        function showHistory() {
+            const history = JSON.parse(localStorage.getItem('fatigueHistory') || '[]');
+            document.getElementById('historyScreen').style.display = 'block';
+            
+            const content = document.getElementById('historyContent');
+            if (history.length === 0) {
+                content.innerHTML = '<p>저장된 기록이 없습니다.</p>';
+                return;
+            }
+            
+            content.innerHTML = history.reverse().map((record, index) => {
+                const workType = workTypes.find(w => w.id === record.workType);
+                if (!workType) return '';
+                
+                return `
+                    <div class="history-item" style="border-left-color: ${workType.color}" data-index="${index}">
+                        <div class="delete-options">
+                            <div class="delete-option" onclick="deleteRecord(${index})">이 기록 삭제</div>
+                            <div class="delete-option delete-all" onclick="deleteAllRecords()">전체 삭제</div>
+                        </div>
+                        <div class="history-title">
+                            <h3>${workType.icon} ${workType.title}</h3>
+                        </div>
+                        <p class="history-date">${new Date(record.timestamp).toLocaleString()}</p>
+                        
+                        <div class="fatigue-group">
+                            <h4>심박수 설정</h4>
+                            <div class="fatigue-label">
+                                <span>설정 범위: ${record.heartRateSettings?.min || 80} - ${record.heartRateSettings?.max || 120} bpm</span>
+                            </div>
+                            <div class="fatigue-bar-container">
+                                <div class="fatigue-bar" style="width: 100%; background-color: #e91e63;"></div>
+                            </div>
+                        </div>
+
+                        <div class="fatigue-group">
+                            <h4>전반적인 피로도</h4>
+                            <div class="fatigue-label">
+                                <span>신체적 피로도 ${record.physical}%</span>
+                            </div>
+                            <div class="fatigue-bar-container">
+                                <div class="fatigue-bar" style="width: ${record.physical}%; background-color: #4CAF50;"></div>
+                            </div>
+                            
+                            <div class="fatigue-label">
+                                <span>정신적 피로도 ${record.mental}%</span>
+                            </div>
+                            <div class="fatigue-bar-container">
+                                <div class="fatigue-bar" style="width: ${record.mental}%; background-color: #2196F3;"></div>
+                            </div>
+                            
+                            <div class="fatigue-label">
+                                <span>스트레스 수준 ${record.stress}%</span>
+                            </div>
+                            <div class="fatigue-bar-container">
+                                <div class="fatigue-bar" style="width: ${record.stress}%; background-color: #FF9800;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="fatigue-group">
+                            <h4>신체 부위별 피로도</h4>
+                            <div class="fatigue-label">
+                                <span>목 ${record.bodyParts.neck}%</span>
+                            </div>
+                            <div class="fatigue-bar-container">
+                                <div class="fatigue-bar" style="width: ${record.bodyParts.neck}%; background-color: #9C27B0;"></div>
+                            </div>
+                            
+                            <div class="fatigue-label">
+                                <span>허리 ${record.bodyParts.back}%</span>
+                            </div>
+                            <div class="fatigue-bar-container">
+                                <div class="fatigue-bar" style="width: ${record.bodyParts.back}%; background-color: #9C27B0;"></div>
+                            </div>
+                            
+                            <div class="fatigue-label">
+                                <span>어깨 ${record.bodyParts.shoulder}%</span>
+                            </div>
+                            <div class="fatigue-bar-container">
+                                <div class="fatigue-bar" style="width: ${record.bodyParts.shoulder}%; background-color: #9C27B0;"></div>
+                            </div>
+                            
+                            <div class="fatigue-label">
+                                <span>다리 ${record.bodyParts.leg}%</span>
+                            </div>
+                            <div class="fatigue-bar-container">
+                                <div class="fatigue-bar" style="width: ${record.bodyParts.leg}%; background-color: #9C27B0;"></div>
+                            </div>
+                            
+                            <div class="fatigue-label">
+                                <span>손목 ${record.bodyParts.wrist}%</span>
+                            </div>
+                            <div class="fatigue-bar-container">
+                                <div class="fatigue-bar" style="width: ${record.bodyParts.wrist}%; background-color: #9C27B0;"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            setupLongPressEvents();
+        }
+
+        function setupLongPressEvents() {
+            const historyItems = document.querySelectorAll('.history-item');
+            let pressTimer;
+            let isLongPress = false;
+
+            historyItems.forEach(item => {
+                // 터치 이벤트
+                item.addEventListener('touchstart', (e) => {
+                    pressTimer = setTimeout(() => {
+                        showDeleteOptions(item);
+                        isLongPress = true;
+                    }, 500);
+                });
+
+                item.addEventListener('touchend', () => {
+                    clearTimeout(pressTimer);
+                    if (!isLongPress) {
+                        hideAllDeleteOptions();
+                    }
+                    isLongPress = false;
+                });
+
+                // 마우스 이벤트
+                item.addEventListener('mousedown', (e) => {
+                    pressTimer = setTimeout(() => {
+                        showDeleteOptions(item);
+                        isLongPress = true;
+                    }, 500);
+                });
+
+                item.addEventListener('mouseup', () => {
+                    clearTimeout(pressTimer);
+                    if (!isLongPress) {
+                        hideAllDeleteOptions();
+                    }
+                    isLongPress = false;
+                });
+
+                item.addEventListener('mouseleave', () => {
+                    clearTimeout(pressTimer);
+                });
+            });
+
+            // 다른 곳 클릭 시 삭제 옵션 숨기기
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.history-item')) {
+                    hideAllDeleteOptions();
+                }
+            });
+        }
+
+        function showDeleteOptions(item) {
+            hideAllDeleteOptions();
+            const deleteOptions = item.querySelector('.delete-options');
+            if (deleteOptions) {
+                deleteOptions.style.display = 'block';
+            }
+        }
+
+        function hideAllDeleteOptions() {
+            document.querySelectorAll('.delete-options').forEach(options => {
+                options.style.display = 'none';
+            });
+        }
+
+        function deleteRecord(index) {
+            if (confirm('이 기록을 삭제하시겠습니까?')) {
+                let history = JSON.parse(localStorage.getItem('fatigueHistory') || '[]');
+                history.splice(history.length - 1 - index, 1);
+                localStorage.setItem('fatigueHistory', JSON.stringify(history));
+                showHistory();
+            }
+        }
+
+        function deleteAllRecords() {
+            if (confirm('모든 기록을 삭제하시겠습니까?')) {
+                localStorage.removeItem('fatigueHistory');
+                showHistory();
+            }
+        }
+
+        function showMainScreen() {
+            document.getElementById('detailScreen').style.display = 'none';
+            document.getElementById('historyScreen').style.display = 'none';
+        }
+
+        window.onload = renderWorkTypes;
+    </script>
 </body>
 </html> 

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'dart:math';
 
 // 작업 유형 데이터 모델
 class WorkType {
@@ -116,158 +118,124 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '쿠팡 작업 관리',
+      title: '심박수 모니터',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        useMaterial3: true,
+        brightness: Brightness.dark,
       ),
-      home: const HomeScreen(),
+      home: const HeartRateMonitor(),
     );
   }
 }
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class HeartRateMonitor extends StatefulWidget {
+  const HeartRateMonitor({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HeartRateMonitor> createState() => _HeartRateMonitorState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('작업 유형 선택 실시간'),
-        backgroundColor: Colors.blue,
-      ),
-      body: ListView.builder(
-        itemCount: workTypes.length,
-        itemBuilder: (context, index) {
-          final workType = workTypes[index];
-          return WorkTypeItem(
-            title: workType.title,
-            description: workType.description,
-            icon: workType.icon,
-            color: workType.color,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => WorkTypeDetailScreen(workType: workType),
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
+class _HeartRateMonitorState extends State<HeartRateMonitor> {
+  int _heartRate = 70;
+  String _status = '정상';
+  Color _statusColor = Colors.green;
+  Timer? _timer;
+  bool _isMonitoring = false;
+  final Random _random = Random();
+
+  void _updateHeartRate() {
+    setState(() {
+      // 심박수를 60-80 사이에서 자연스럽게 변동
+      _heartRate = 70 + _random.nextInt(21) - 10;
+      
+      // 상태 업데이트
+      if (_heartRate < 60) {
+        _status = '낮음';
+        _statusColor = Colors.blue;
+      } else if (_heartRate < 100) {
+        _status = '정상';
+        _statusColor = Colors.green;
+      } else if (_heartRate < 120) {
+        _status = '높음';
+        _statusColor = Colors.orange;
+      } else {
+        _status = '위험';
+        _statusColor = Colors.red;
+      }
+    });
   }
-}
 
-class WorkTypeItem extends StatelessWidget {
-  final String title;
-  final String description;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
+  void _startMonitoring() {
+    setState(() {
+      _isMonitoring = true;
+    });
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _updateHeartRate();
+    });
+  }
 
-  const WorkTypeItem({
-    super.key,
-    required this.title,
-    required this.description,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
+  void _stopMonitoring() {
+    setState(() {
+      _isMonitoring = false;
+    });
+    _timer?.cancel();
+  }
 
   @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.all(8.0),
-      child: ListTile(
-        leading: Icon(icon, size: 32, color: color),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        subtitle: Text(description),
-        onTap: onTap,
-      ),
-    );
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
-}
-
-class WorkTypeDetailScreen extends StatelessWidget {
-  final WorkType workType;
-
-  const WorkTypeDetailScreen({
-    super.key,
-    required this.workType,
-  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(workType.title),
-        backgroundColor: workType.color,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+      body: Center(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Row(
-              children: [
-                Icon(workType.icon, size: 48, color: workType.color),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    workType.title,
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.black26,
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    '$_heartRate',
                     style: const TextStyle(
-                      fontSize: 24,
+                      fontSize: 72,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-              ],
+                  const Text(
+                    'BPM',
+                    style: TextStyle(fontSize: 24),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    _status,
+                    style: TextStyle(
+                      fontSize: 24,
+                      color: _statusColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 24),
-            _buildSection('작업 설명', workType.description),
-            _buildSection('필요 역량', workType.requirements),
-            _buildSection('주의사항', workType.precautions),
-            _buildSection('필요 장비', workType.equipment),
-            _buildSection('작업 과정', workType.process),
+            const SizedBox(height: 40),
+            ElevatedButton(
+              onPressed: _isMonitoring ? _stopMonitoring : _startMonitoring,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                textStyle: const TextStyle(fontSize: 20),
+              ),
+              child: Text(_isMonitoring ? '모니터링 중지' : '모니터링 시작'),
+            ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildSection(String title, String content) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: workType.color,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            content,
-            style: const TextStyle(fontSize: 16),
-          ),
-        ],
       ),
     );
   }

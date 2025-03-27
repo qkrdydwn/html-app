@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>가민 워치 연결 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 20px 0;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+        #heartRate {
+            font-size: 24px;
+            color: #dc3545;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>가민 워치 블루투스 연결 테스트</h1>
+    <button onclick="connectToWatch()">워치 연결하기</button>
+    <div id="status">상태: 연결 대기 중...</div>
+    <div id="heartRate"></div>
+
+    <script>
+        async function connectToWatch() {
+            try {
+                // 블루투스 지원 확인
+                if (!navigator.bluetooth) {
+                    updateStatus('이 브라우저는 Web Bluetooth API를 지원하지 않습니다. Chrome을 사용해주세요.');
+                    return;
+                }
+
+                updateStatus('가민 워치 검색 중...');
+
+                // 워치 검색 및 연결
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [
+                        { namePrefix: 'Garmin' }
+                    ],
+                    optionalServices: ['heart_rate']
+                });
+
+                updateStatus(`'${device.name}' 발견! 연결 시도 중...`);
+
+                // GATT 서버 연결
+                const server = await device.gatt.connect();
+                updateStatus('GATT 서버 연결됨');
+
+                // 심박수 서비스 가져오기
+                const service = await server.getPrimaryService('heart_rate');
+                const characteristic = await service.getCharacteristic('heart_rate_measurement');
+
+                // 실시간 심박수 모니터링 시작
+                await characteristic.startNotifications();
+
+                characteristic.addEventListener('characteristicvaluechanged', handleHeartRate);
+                
+                updateStatus('연결 완료! 심박수 모니터링 중...');
+
+                // 연결 해제 이벤트 처리
+                device.addEventListener('gattserverdisconnected', () => {
+                    updateStatus('연결이 끊어졌습니다.');
+                    document.getElementById('heartRate').textContent = '';
+                });
+
+            } catch (error) {
+                console.error(error);
+                updateStatus('오류 발생: ' + error.message);
+            }
+        }
+
+        function handleHeartRate(event) {
+            const value = event.target.value;
+            const heartRate = value.getUint8(1);
+            document.getElementById('heartRate').textContent = `현재 심박수: ${heartRate} BPM`;
+            
+            // 높은 심박수 경고
+            if (heartRate > 100) {
+                updateStatus(`경고: 심박수가 높습니다 (${heartRate} BPM)`);
+            }
+        }
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = '상태: ' + message;
+            console.log(message);
+        }
+    </script>
+</body>
+</html> 
